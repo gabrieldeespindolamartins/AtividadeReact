@@ -48,6 +48,27 @@ app.post('/login', (req, res)=>{
     } else {
         return res.status(400).json({erro: "usuario ou senha incorretos!"})
     }
-
-
 })
+
+// Middleware para verificar o token // essa parte pra baixo  foi toda copilotada
+function verificarToken(req, res, next) {
+    const token = req.headers['authorization']; // Obtém o token do cabeçalho Authorization
+
+    if (!token) {
+        return res.status(403).json({ erro: "Token não fornecido!" });
+    }
+
+    jwt.verify(token, 'secretKey', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ erro: "Token inválido!" });
+        }
+
+        req.usuario = decoded; // Decodifica o token e armazena os dados no request
+        next(); // Passa para o próximo middleware ou rota
+    });
+}
+
+// Rota GET protegida
+app.get('/', verificarToken, (req, res) => {
+    res.status(200).json({ mensagem: "Acesso autorizado!", usuario: req.usuario });
+});
